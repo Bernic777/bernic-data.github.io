@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate of Bernic Yesnat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .file-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .file-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            border-color: #3b82f6;
+        }
+
+        /* Loading Animation */
+        .loader-dots div {
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+        .loader-dots div:nth-child(1) { left: 8px; animation: loader-dots1 0.6s infinite; }
+        .loader-dots div:nth-child(2) { left: 8px; animation: loader-dots2 0.6s infinite; }
+        .loader-dots div:nth-child(3) { left: 32px; animation: loader-dots2 0.6s infinite; }
+        .loader-dots div:nth-child(4) { left: 56px; animation: loader-dots3 0.6s infinite; }
+        @keyframes loader-dots1 { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        @keyframes loader-dots3 { 0% { transform: scale(1); } 100% { transform: scale(0); } }
+        @keyframes loader-dots2 { 0% { transform: translate(0, 0); } 100% { transform: translate(24px, 0); } }
+    </style>
+</head>
+<body class="min-h-screen pb-20">
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 glass border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2.5 rounded-2xl shadow-lg shadow-blue-200">
+                    <i data-lucide="hard-drive" class="text-white w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">DocVault <span class="text-blue-600">PRO</span></h1>
+                    <div class="flex items-center gap-2">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <p id="status-text" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Scanning...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="hidden md:flex bg-slate-100 p-1 rounded-xl">
+                <button onclick="filterFiles('all')" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-600 shadow-sm transition-all">Semua</button>
+                <button onclick="filterFiles('pdf')" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-700 transition-all">PDF</button>
+                <button onclick="filterFiles('img')" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-700 transition-all">Gambar</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 pt-8">
+        <!-- Stats Dashboard -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            <div class="glass p-5 rounded-3xl border-l-4 border-l-blue-500">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Total File Aktif</p>
+                <h3 class="text-3xl font-black text-slate-800 mt-1" id="stat-total">0</h3>
+            </div>
+            <div class="glass p-5 rounded-3xl border-l-4 border-l-red-500">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Dokumen PDF</p>
+                <h3 class="text-3xl font-black text-red-600 mt-1" id="stat-pdf">0</h3>
+            </div>
+            <div class="glass p-5 rounded-3xl border-l-4 border-l-emerald-500">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Gambar / Foto</p>
+                <h3 class="text-3xl font-black text-emerald-600 mt-1" id="stat-img">0</h3>
+            </div>
+            <div class="glass p-5 rounded-3xl border-l-4 border-l-amber-500">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Kapasitas</p>
+                <h3 class="text-3xl font-black text-amber-600 mt-1" id="stat-size">Online</h3>
+            </div>
+        </div>
+
+        <!-- File Grid -->
+        <div id="file-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Loading State -->
+            <div id="loader" class="col-span-full py-20 text-center">
+                <div class="loader-dots relative w-20 h-5 mx-auto mb-4">
+                    <div class="absolute top-0 w-3 h-3 rounded-full bg-blue-600"></div>
+                    <div class="absolute top-0 w-3 h-3 rounded-full bg-blue-600"></div>
+                    <div class="absolute top-0 w-3 h-3 rounded-full bg-blue-600"></div>
+                    <div class="absolute top-0 w-3 h-3 rounded-full bg-blue-600"></div>
+                </div>
+                <p class="text-slate-400 font-bold animate-pulse">Memverifikasi file di server...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Preview -->
+    <div id="preview-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden p-4">
+        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="relative bg-white w-full max-w-5xl h-[85vh] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col transform transition-all scale-95 opacity-0" id="modal-content">
+            <div class="flex items-center justify-between p-5 border-b bg-slate-50/50">
+                <div class="flex items-center gap-3 overflow-hidden">
+                    <div id="modal-icon-bg" class="p-2 rounded-xl">
+                        <i id="modal-icon" data-lucide="file" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 id="modal-title" class="font-bold text-slate-800 truncate text-sm md:text-base">Filename</h3>
+                        <p id="modal-path" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">Path</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a id="modal-download" href="#" download class="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                    </a>
+                    <button onclick="closeModal()" class="p-2.5 bg-slate-100 text-slate-500 rounded-xl hover:bg-rose-100 hover:text-rose-600 transition-colors">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="modal-body" class="flex-grow bg-slate-100 overflow-hidden flex items-center justify-center relative">
+                <!-- Content injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * KONFIGURASI FILE MANIFEST
+         * Masukkan semua kemungkinan nama file di sini.
+         * Script akan mengecek satu per satu. Jika ada di server, akan ditampilkan.
+         */
+        const manifest = [
+            // BTCLS
+            "cert/btcls/sertifikat-btcls.pdf",
+            "cert/btcls/foto.jpg",
+            "cert/btcls/dokumentasi.png",
+            // CEH
+            "cert/ceh/ceh-master.pdf",
+            "cert/ceh/badge.png",
+            "cert/ceh/score.pdf",
+            // Hiperkes
+            "cert/hiperkes/sertifikat.pdf",
+            "cert/hiperkes/foto.jpg",
+            // Tasmania
+            "cert/The-University-of-Tasmania/degree.pdf",
+            "cert/The-University-of-Tasmania/transcript.pdf",
+            // Unklab
+            "cert/unklab/ijazah.pdf",
+            "cert/unklab/transkrip.pdf",
+            "cert/unklab/wisuda.jpg",
+            // Tambahkan file lain sesuai kebutuhan folder Anda
+            "cgi-bin/readme.txt" 
+        ];
+
+        let activeFiles = [];
+        let currentFilter = 'all';
+
+        async function init() {
+            const container = document.getElementById('file-container');
+            const loader = document.getElementById('loader');
+            const statusText = document.getElementById('status-text');
+
+            // Proses Scanning
+            const promises = manifest.map(async (path) => {
+                try {
+                    // Gunakan HEAD request agar cepat (hanya cek header, tidak download body)
+                    const response = await fetch(path, { method: 'HEAD' });
+                    if (response.ok) {
+                        const parts = path.split('/');
+                        const name = parts.pop();
+                        const folder = parts.length > 0 ? parts[parts.length - 1] : 'root';
+                        const ext = name.split('.').pop().toLowerCase();
+                        return { name, path, folder, ext, size: response.headers.get('content-length') };
+                    }
+                } catch (e) {
+                    return null;
+                }
+                return null;
+            });
+
+            const results = await Promise.all(promises);
+            activeFiles = results.filter(file => file !== null);
+
+            // Selesai Scanning
+            loader.remove();
+            statusText.textContent = "Live & Ready";
+            statusText.classList.remove('text-slate-500');
+            statusText.classList.add('text-green-600');
+
+            updateStats();
+            renderFiles();
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total').innerText = activeFiles.length;
+            document.getElementById('stat-pdf').innerText = activeFiles.filter(f => f.ext === 'pdf').length;
+            document.getElementById('stat-img').innerText = activeFiles.filter(f => ['jpg','jpeg','png','gif','svg'].includes(f.ext)).length;
+        }
+
+        function renderFiles() {
+            const container = document.getElementById('file-container');
+            container.innerHTML = '';
+
+            let filesToShow = activeFiles;
+            if (currentFilter === 'pdf') filesToShow = activeFiles.filter(f => f.ext === 'pdf');
+            if (currentFilter === 'img') filesToShow = activeFiles.filter(f => ['jpg','jpeg','png','gif','svg'].includes(f.ext));
+
+            if (filesToShow.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 text-center border-2 border-dashed border-slate-200 rounded-3xl">
+                        <i data-lucide="folder-open" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+                        <p class="text-slate-400 font-medium">Tidak ada file ditemukan untuk filter ini.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            filesToShow.forEach(file => {
+                const isPdf = file.ext === 'pdf';
+                const icon = isPdf ? 'file-text' : 'image';
+                const color = isPdf ? 'text-red-500' : 'text-blue-500';
+                const bg = isPdf ? 'bg-red-50' : 'bg-blue-50';
+
+                const card = document.createElement('div');
+                card.className = "file-card glass p-5 rounded-[2rem] border border-slate-100 cursor-pointer group flex flex-col relative";
+                card.onclick = () => openModal(file);
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="${bg} p-3.5 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                            <i data-lucide="${icon}" class="${color} w-7 h-7"></i>
+                        </div>
+                        <span class="text-[10px] font-black uppercase text-slate-300 bg-white px-2 py-1 rounded-lg border border-slate-100">${file.ext}</span>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4 class="font-bold text-slate-800 text-sm line-clamp-2 leading-relaxed group-hover:text-blue-600 transition-colors">${file.name}</h4>
+                        <div class="flex items-center gap-1.5 mt-2">
+                            <i data-lucide="folder" class="w-3 h-3 text-slate-400"></i>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${file.folder}</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                        <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div> Online
+                        </span>
+                        <i data-lucide="arrow-right" class="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function filterFiles(type) {
+            currentFilter = type;
+            // Update tombol aktif
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.className = "filter-btn px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-700 transition-all";
+            });
+            const activeBtn = document.querySelector(`button[onclick="filterFiles('${type}')"]`);
+            activeBtn.className = "filter-btn px-4 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-600 shadow-sm transition-all";
+            
+            renderFiles();
+        }
+
+        // --- MODAL LOGIC ---
+        const modal = document.getElementById('preview-modal');
+        const modalContent = document.getElementById('modal-content');
+        const modalBody = document.getElementById('modal-body');
+
+        function openModal(file) {
+            document.getElementById('modal-title').textContent = file.name;
+            document.getElementById('modal-path').textContent = file.path;
+            document.getElementById('modal-download').href = file.path;
+
+            const isPdf = file.ext === 'pdf';
+            const iconBg = document.getElementById('modal-icon-bg');
+            const icon = document.getElementById('modal-icon');
+
+            if (isPdf) {
+                iconBg.className = 'p-2 rounded-xl bg-red-50';
+                icon.innerHTML = '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline>';
+                icon.classList.add('text-red-500');
+            } else {
+                iconBg.className = 'p-2 rounded-xl bg-blue-50';
+                icon.innerHTML = '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path>';
+                icon.classList.add('text-blue-500');
+            }
+
+            modal.classList.remove('hidden');
+            // Animasi masuk
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+
+            // Render konten
+            modalBody.innerHTML = '<div class="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full"></div>';
+            
+            setTimeout(() => {
+                if (isPdf) {
+                    modalBody.innerHTML = `<iframe src="${file.path}" class="w-full h-full border-none"></iframe>`;
+                } else if (['jpg','jpeg','png','gif','svg'].includes(file.ext)) {
+                    modalBody.innerHTML = `<img src="${file.path}" class="max-w-full max-h-full object-contain p-4 shadow-lg rounded-lg">`;
+                } else {
+                    modalBody.innerHTML = `<div class="text-center p-10"><p class="text-slate-500">Pratinjau tidak tersedia untuk format ini.</p></div>`;
+                }
+            }, 500);
+        }
+
+        function closeModal() {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modalBody.innerHTML = '';
+            }, 300);
+        }
+
+        // Start App
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
